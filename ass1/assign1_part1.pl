@@ -19,10 +19,30 @@ log_table([H | T], ResultList) :-
     append([[H, X]], Rest, ResultList).
 
 % Q1.3: paruns(List,RunList) - converts a list of numbers into the corresponding list of parity runs
-% paruns([],[]).
-% paruns([A,B|T], [[A,B]]) :- 
-%     mod(A, 2) =:= 0,
-%     mod(B, 2) =:= 0.
+paruns([],[]).
+paruns([Head | Tail], [E, O | S]) :-
+   even([Head | Tail], E, Last),
+   odd(Last, O, Last1),
+   paruns(Last1, S).
+% paruns([Head | Tail], R) :-
+%    even([Head | Tail], E, Last),
+%    odd(Last, O, Last1),
+%     (E=[] -> R=[O|S] ; O=[] -> R=[E|S] ; R=[E,O|S]),
+%    paruns(Last1, S).
+
+even([],[],[]).
+even([Head | Tail], [], [Head | Tail]) :-
+   Head mod 2 =:= 1.
+even([Head | Tail], [Head | L], Last) :-
+   Head mod 2 =:= 0,
+   even(Tail, L, Last).
+
+odd([],[],[]). 
+odd([Head | Tail], [], [Head | Tail]) :-
+   Head mod 2 =:= 0.
+odd([Head | Tail], [Head | L], Last) :-
+   Head mod 2 =:= 1,
+   odd(Tail, L, Last).
 
 
 % Q1.4: eval(Expr, Val) - that will evaluate an expression
