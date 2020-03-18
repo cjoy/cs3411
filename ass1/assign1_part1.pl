@@ -1,6 +1,7 @@
 % Assignment 1 - Part 1 Prolog 
-% COMP3411, March 2020
+% COMP3411 20T1, 20th of March
 % Chris Joy, z5113243
+
 
 % Q1.1: sumsq_even(Numbers, Sum) - sums the squares of only the even numbers in a list of integers
 sumsq_even([], 0).
@@ -66,4 +67,4 @@ eval(div(A, B), Val) :-
 
 % Miscellaneous helpers
 even(N) :- 0 is N mod 2.
-odd(N) :- 1 is N mod 2.
+odd(N) :- not(even(N)).
