@@ -167,6 +167,23 @@ process(event(Event, EventL), Ref1, Ref2) :-
 	process(Object, Ref3, Ref2),
     assert(history(event(Event, EventL))).
 
+% process events with conjuctions
+process(event(Event, EventL), Ref1, Ref2) :-
+	EventL = [actor(set(thing(Entity1,_),thing(Entity2,__))), object(Object)],
+	process(set(thing(Entity1,_),thing(Entity2,__)), Ref1, Ref3),
+	process(Object, Ref3, Ref2),
+    assert(history(event(Event, EventL))).
+
+% Append sets to history
+process(set(thing(Entity1, Attr1),thing(Entity2,Attr2)), Ref1, Ref3) :-
+	assert(history(set(thing(Entity1,Attr1),thing(Entity2,Attr2)))).
+
+% Looks for set in history
+process(personal(they), Ref1, Ref2) :-
+	history(set(thing(Entity1, __), thing(Entity2, __))),
+	merge_list(Ref1, [Entity1, Entity2], Ref2).
+
+
 % process events with personal pronouns
 process(event(Event, EventL), Ref1, Ref2) :-
 	EventL = [actor(personal(Entity)), object(Object)],
@@ -191,13 +208,12 @@ process(possessive(Pronoun, Thing), Ref1, Ref2) :-
 process(personal(Pronoun), Ref1, Ref2) :-
 	personal(Pronoun, [number(N), gender(G)]),
 	history(thing(Name, [isa(person), gender(G), number(N)])),
-	writeln(Name),
 	merge_list(Ref1, [Name], Ref2).
+
 % Look for personal pronouns in history, that is a object
 process(personal(Pronoun), Ref1, Ref2) :-
 	personal(Pronoun, [number(N), gender(G)]),
 	history(thing(Name, [isa(physical_object), gender(G), number(N)])),
-	writeln(Name),
 	merge_list(Ref1, [Name], Ref2).
 
 
@@ -205,7 +221,7 @@ process(personal(Pronoun), Ref1, Ref2) :-
 % make, abolish(history/1), run([john, lost,his,wallet], Refs).
 % make, run([he, looked, for, it], Refs).
 % Test case 2
-% make, abolish(history/1), run([john, and, marry, looked, for, the, wallet], Refs).
+% make, abolish(history/1), run([john, and, mary, looked, for, the, wallet], X).
 % make, run([they, found, it], Refs).
 
 
