@@ -149,7 +149,6 @@ possessive(her, [number(singular), gender(feminine)]).
 
 
 % Merge two lists, copied from:
-% https://stackoverflow.com/questions/15926034/how-to-merge-lists-in-prolog
 merge_list([], L, L).
 merge_list([H|T], L, [H|M]):-
     merge_list(T, L, M).
