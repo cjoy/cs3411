@@ -20,12 +20,12 @@ np1(Number, thing(Name, [])) -->
 	proper_noun(Number, _, Name).
 np1(Number, personal(Pro)) -->
 	pronoun(Number, _, Pro).
-np1(Number1, possessive(Pos, thing(Noun, []))) -->
-	possessive_pronoun(Number1, _, Pos), noun(_, Noun).
+np1(Number1, possessive(Pos, NP)) -->
+	possessive_pronoun(Number1, _, Pos), noun_phrase(_, NP).
 np1(Number, object(Noun)) -->
 	num(Number), noun(Number, Noun).
 
-adjp([prop(Adj)]) --> adjective(Adj).
+adjp([Adj]) --> adjective(Adj).
 adjp([]) --> [].
 
 verb_phrase(Actor, Number, event(V, [actor(Actor) | Adv])) -->
@@ -60,8 +60,9 @@ determiner(_, _) --> [].
 
 pronoun(singular, masculine, he) --> [he].
 pronoun(singular, feminine, she) --> [she].
-pronoun(_, neutral, what) --> [what].
-pronoun(singular, neutral,Pro) --> [Pro], {member(Pro, [i, someone, it])}.
+pronoun(singular, neutral, that) --> [that].
+pronoun(plural, neutral, those) --> [those].
+pronoun(singular, neutral, Pro) --> [Pro], {member(Pro, [i, someone, it])}.
 pronoun(plural, neutral, Pro) --> [Pro], {member(Pro, [they, some])}.
 
 possessive_pronoun(singular, masculine, his) --> [his].
@@ -86,7 +87,7 @@ proper_noun(singular, Gender, Name) -->
 	}.
 proper_noun(singular, neutral, france) --> [france].
 
-adjective(adj(Adj)) --> [Adj], {member(Adj, [red,green,blue])}.
+adjective(prop(Adj)) --> [Adj], {member(Adj, [red,green,blue])}.
 
 verb(_, Verb) --> [Verb], {member(Verb, [lost,found,did,gave,looked,saw,forgot,is])}.
 verb(singular, Verb) --> [Verb], {member(Verb, [scares,hates])}.
@@ -115,7 +116,7 @@ thing(book, [isa(physical_object), gender(neutral), number(singular)]).
 thing(telescope, [isa(physical_object), gender(neutral), number(singular)]).
 thing(pen, [isa(physical_object), gender(neutral), number(singular)]).
 thing(pencil, [isa(physical_object), gender(neutral), number(singular)]).
-thing(cats, [isa(physical_object), gender(neutral), number(singular)]).
+thing(cat, [isa(physical_object), gender(neutral), number(singular)]).
 thing(mouse, [isa(physical_object), gender(neutral), number(singular)]).
 thing(man, [isa(physical_object), gender(neutral), number(singular)]).
 thing(bear, [isa(physical_object), gender(neutral), number(singular)]).
@@ -139,22 +140,29 @@ event(hates, [actor(_), object(_), tense(present), number(singular)]).
 event(hate, [actor(_), object(_), tense(present), number(plural)]).
 event(gave, [actor(Person1), recipient(Person2), object(_), tense(past)]) :- Person1 \= Person2.
 
+personal(i, [number(singular), gender(neutral)]).
 personal(he, [number(singular), gender(masculine)]).
 personal(she, [number(singular), gender(feminine)]).
 personal(it, [number(singular), gender(neutral)]).
-personal(they, [ number(plural), gender(neutral)]).
+personal(that, [number(singular), gender(neutral)]).
+personal(those, [number(plural), gender(neutral)]).
+personal(they, [number(plural), gender(neutral)]).
 
 possessive(his, [number(singular), gender(masculine)]).
 possessive(her, [number(singular), gender(feminine)]).
 
+run(S, Refs) :-
+	sentence(X, S, []), !,
+	writeln(X),
+	process(X, [], Refs),
+	listing(history/1).
 
 % Merge two lists, copied from:
 merge_list([], L, L).
 merge_list([H|T], L, [H|M]):-
     merge_list(T, L, M).
 
-
-% You have to write this:
+% Approach:
 % 1. (event / thing) have to be appended to the history
 % 2. everytime we see a pronoun and can match it in the history, we append it to Ref2
 
@@ -180,7 +188,10 @@ process(set(thing(Entity1, Attr1),thing(Entity2,Attr2)), Ref1, Ref3) :-
 % Looks for set in history
 process(personal(they), Ref1, Ref2) :-
 	history(set(thing(Entity1, __), thing(Entity2, __))),
-	merge_list(Ref1, [Entity1, Entity2], Ref2).
+	merge_list(Ref1, [[Entity1, Entity2]], Ref2).
+process(personal(those), Ref1, Ref2) :-
+	history(set(thing(Entity1, __), thing(Entity2, __))),
+	merge_list(Ref1, [[Entity1, Entity2]], Ref2).
 
 
 % process events with personal pronouns
@@ -216,16 +227,35 @@ process(personal(Pronoun), Ref1, Ref2) :-
 	merge_list(Ref1, [Name], Ref2).
 
 
-% Test case 1
-% make, abolish(history/1), run([john, lost,his,wallet], Refs).
-% make, run([he, looked, for, it], Refs).
-% Test case 2
-% make, abolish(history/1), run([john, and, mary, looked, for, the, wallet], X).
-% make, run([they, found, it], Refs).
 
 
-run(S, Refs) :-
-	sentence(X, S, []), !,
-	writeln(X),
-	process(X, [], Refs),
-	listing(history/1).
+% Test cases from lecturer:
+% Base cases that you should be able to handle
+% run([john,lost,his,wallet], Refs).
+% Refs = [John].
+% run([john,lost,her,wallet], Refs).
+% false.
+% run([mary,lost,her,wallet], Refs).
+% Refs = [mary].
+% run([she,looked,for,it], Refs).
+% Refs = [mary, wallet].
+
+% abolish(history/1)
+% run([mary,lost,her,wallet], Refs).
+% Refs = [mary].
+% run([he,looked,for,it], Refs).
+% false.
+% run([john,looked,for,it], Refs).
+% Refs = [wallet].
+% run([he,found,it], Refs).
+% Refs = [john, wallet].
+
+% abolish(history/1).
+% run([mary,gave,the wallet,to,john], Refs).
+% Refs = [].
+% run([he,lost,it], Refs).
+% Refs = [john, wallet].
+% run([john,and,mary,looked,for,it], X).
+% Refs = [wallet].
+% run([they,found,it], Refs).
+% Refs = [[john, mary], wallet].
